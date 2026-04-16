@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 
-// Системный промпт — объясняет AI как себя вести
 const SYSTEM_PROMPT = `You are Matlic, an AI math tutor inside the MATHIC learning platform.
 
 Your personality:
@@ -40,84 +39,69 @@ function MatlicChat({ darkMode }) {
   }, [messages]);
 
   async function handleSend() {
-    const text = input.trim();
-    if (!text) return;
+    const userText = input.trim();
+    if (!userText) return;
 
-    // Добавляем сообщение пользователя
-    const userMsg = { id: Date.now(), role: "user", text };
+    const userMsg = { id: Date.now(), role: "user", text: userText };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsTyping(true);
 
     try {
-      // Готовим историю сообщений для API
-      // Groq ожидает массив {role, content}
       const history = messages.map((msg) => ({
         role: msg.role,
         content: msg.text,
       }));
+      history.push({ role: "user", content: userText });
 
-      // Добавляем новое сообщение пользователя
-      history.push({ role: "user", content: text });
-
-      // Отправляем запрос к Groq API
       const response = await fetch(
-        "/openai/v1/chat/completions",
+        "https://api.groq.com/openai/v1/chat/completions",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // Берём ключ из .env файла
             Authorization: `Bearer ${process.env.REACT_APP_GROQ_KEY}`,
           },
           body: JSON.stringify({
-            // Используем быструю модель Llama
             model: "llama-3.3-70b-versatile",
+            max_tokens: 300,
+            temperature: 0.7,
             messages: [
-              // Сначала системный промпт
               { role: "system", content: SYSTEM_PROMPT },
-              // Затем история переписки
               ...history,
             ],
-            // Максимум 300 токенов — чтобы ответы были короткими
-            max_tokens: 300,
-            // temperature — насколько "творческий" AI
-            // 0 = точный, 1 = творческий. 0.7 — хороший баланс
-            temperature: 0.7,
           }),
         }
       );
 
-      // Парсим ответ
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Groq error:", response.status, errText);
+        throw new Error(`Status ${response.status}`);
+      }
+
       const data = await response.json();
-            
-      // Временно — смотрим что вернул Groq
-      console.log("Groq response:", data);
-      console.log("Groq error detail:", JSON.stringify(data.error));
-      // Достаём текст ответа из структуры Groq
+
+      if (!data.choices || !data.choices[0]) {
+        throw new Error("Empty response");
+      }
+
       const aiText = data.choices[0].message.content;
 
-      const assistantMsg = {
+      setMessages((prev) => [...prev, {
         id: Date.now() + 1,
         role: "assistant",
         text: aiText,
-      };
-
-      setMessages((prev) => [...prev, assistantMsg]);
+      }]);
 
     } catch (error) {
-      // Если что-то пошло не так — показываем ошибку
       console.error("Groq API error:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          role: "assistant",
-          text: "Sorry, I had trouble connecting. Please check your API key in the .env file and try again.",
-        },
-      ]);
+      setMessages((prev) => [...prev, {
+        id: Date.now() + 1,
+        role: "assistant",
+        text: `Sorry, I had trouble connecting (${error.message}). Please try again.`,
+      }]);
     } finally {
-      // В любом случае убираем анимацию печатания
       setIsTyping(false);
     }
   }
