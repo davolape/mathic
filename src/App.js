@@ -10,6 +10,7 @@ import KnowledgePage from "./pages/KnowledgePage";
 import StudyRoomPage from "./pages/StudyRoomPage";
 import ClansPage from "./pages/ClansPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
+import LandingPage from "./pages/LandingPage";
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
@@ -41,9 +42,11 @@ function App() {
   // Не авторизован — показываем страницу входа
   if (!user) {
     return (
-      <div className={`login-page ${darkMode ? "dark" : "light"}`}>
-        <LoginPage
-          onLogin={signInWithGoogle}
+      <div style={{ width: "100%", minHeight: "100vh" }}
+        className={darkMode ? "dark" : "light"}
+      >
+        <LandingPage
+          onGetStarted={signInWithGoogle}
           darkMode={darkMode}
         />
       </div>
