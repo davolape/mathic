@@ -2968,3 +2968,25 @@ body {
   color: #1E1E35;
   border-left-color: #EAB308;
 }
+
+.explain-btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid #EAB308;
+  background: transparent;
+  color: #EAB308;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  display: block;
+}
+.explain-btn:hover:not(:disabled) {
+  background: #EAB308;
+  color: #000;
+}
+.explain-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

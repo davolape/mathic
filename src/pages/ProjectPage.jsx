@@ -29,6 +29,7 @@ print(result)`
   );
   const [mathText, setMathText] = useState("");
 
+  // AI объясняет код
   async function handleExplainCode() {
     if (!codeAnswer.trim()) return;
     setIsExplaining(true);
@@ -73,6 +74,76 @@ Do not give away full solutions.`,
     }
   }
 
+  // AI объясняет математическое решение
+  async function handleExplainMath() {
+    if (!mathText.trim()) return;
+    setIsExplaining(true);
+    setExplanation(null);
+    try {
+      const response = await fetch(
+        "https://api.groq.com/openai/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.REACT_APP_GROQ_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            max_tokens: 600,
+            temperature: 0.3,
+            messages: [
+              {
+                role: "system",
+                content: `You are a math tutor.
+Explain the student's mathematical solution step by step.
+Point out what they did correctly and where they can improve.
+Format as a numbered list. Keep each point to 1-2 sentences.
+Do not give away the full answer — guide them to understand.`,
+              },
+              {
+                role: "user",
+                content: `Explain this math solution:\n\n${mathText}`,
+              },
+            ],
+          }),
+        }
+      );
+      if (!response.ok) throw new Error(`Status ${response.status}`);
+      const data = await response.json();
+      setExplanation(data.choices[0].message.content);
+    } catch (err) {
+      setExplanation("Sorry, could not connect to AI. Please try again.");
+    } finally {
+      setIsExplaining(false);
+    }
+  }
+
+  // Блок объяснения — используется в обоих режимах
+  function ExplanationBlock() {
+    if (!explanation) return null;
+    return (
+      <div className="explanation-box" style={{ marginTop: 12 }}>
+        <div className="explanation-header">
+          <span className="explanation-title">🔍 Explanation</span>
+          <button
+            className="explanation-close"
+            onClick={() => setExplanation(null)}
+          >
+            ✕
+          </button>
+        </div>
+        <div className="explanation-content">
+          {explanation.split("\n").map((line, i) =>
+            line.trim() ? (
+              <div key={i} className="explanation-line">{line}</div>
+            ) : null
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`proj ${darkMode ? "dark" : "light"}`}>
 
@@ -103,13 +174,13 @@ Do not give away full solutions.`,
         <div className="mode-toggle">
           <button
             className={`mode-btn ${solveMode === "math" ? "mode-active" : ""}`}
-            onClick={() => setSolveMode("math")}
+            onClick={() => { setSolveMode("math"); setExplanation(null); }}
           >
             📐 Math
           </button>
           <button
             className={`mode-btn ${solveMode === "code" ? "mode-active" : ""}`}
-            onClick={() => setSolveMode("code")}
+            onClick={() => { setSolveMode("code"); setExplanation(null); }}
           >
             🐍 Code
           </button>
@@ -124,7 +195,7 @@ Do not give away full solutions.`,
       {/* Сетка 2 колонки */}
       <div className="proj-grid">
 
-        {/* ЛЕВАЯ КОЛОНКА */}
+        {/* ── ЛЕВАЯ КОЛОНКА ── */}
         <div className="proj-col">
 
           {/* Theory */}
@@ -147,13 +218,14 @@ Do not give away full solutions.`,
             </div>
           </div>
 
-          {/* Code / Math editor */}
+          {/* Редактор */}
           <div className="proj-section-label" style={{ marginTop: 16 }}>
             <div className="section-icon icon-blue">⌨️</div>
             <span>{solveMode === "code" ? "Code" : "Math Solution"}</span>
           </div>
 
-          {solveMode === "code" ? (
+          {/* ── Code режим ── */}
+          {solveMode === "code" && (
             <div className="proj-card" style={{ padding: 0 }}>
               <textarea
                 className="code-editor"
@@ -175,42 +247,25 @@ Do not give away full solutions.`,
                   ↗ Request Review
                 </button>
               </div>
-
-              {/* Explain My Code */}
               <div style={{ padding: "10px 14px", background: "#0d0d1a" }}>
                 <button
                   className="explain-btn"
                   onClick={handleExplainCode}
                   disabled={isExplaining || !codeAnswer.trim()}
-                  style={{ width: "100%" }}
                 >
                   {isExplaining ? "⏳ Analyzing..." : "🔍 Explain My Code"}
                 </button>
               </div>
-
-              {/* Объяснение */}
               {explanation && (
-                <div className="explanation-box" style={{ margin: "0 14px 14px" }}>
-                  <div className="explanation-header">
-                    <span className="explanation-title">🔍 Code Explanation</span>
-                    <button
-                      className="explanation-close"
-                      onClick={() => setExplanation(null)}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <div className="explanation-content">
-                    {explanation.split("\n").map((line, i) =>
-                      line.trim() ? (
-                        <div key={i} className="explanation-line">{line}</div>
-                      ) : null
-                    )}
-                  </div>
+                <div style={{ margin: "0 14px 14px" }}>
+                  <ExplanationBlock />
                 </div>
               )}
             </div>
-          ) : (
+          )}
+
+          {/* ── Math режим ── */}
+          {solveMode === "math" && (
             <div className="proj-card">
               <textarea
                 className="math-editor"
@@ -222,21 +277,31 @@ Do not give away full solutions.`,
                 value={mathText}
                 onChange={(e) => setMathText(e.target.value)}
               />
-              <button
-                className="action-btn btn-run"
-                style={{ marginTop: 10 }}
-                onClick={() => setShowResult(true)}
-              >
-                ✓ Submit Solution
-              </button>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+                <button
+                  className="action-btn btn-run"
+                  onClick={() => setShowResult(true)}
+                >
+                  ✓ Submit Solution
+                </button>
+                <button
+                  className="explain-btn"
+                  onClick={handleExplainMath}
+                  disabled={isExplaining || !mathText.trim()}
+                >
+                  {isExplaining ? "⏳ Analyzing..." : "🔍 Explain My Solution"}
+                </button>
+              </div>
+              <ExplanationBlock />
             </div>
           )}
+
         </div>
 
         {/* Разделитель */}
         <div className="proj-divider" />
 
-        {/* ПРАВАЯ КОЛОНКА */}
+        {/* ── ПРАВАЯ КОЛОНКА ── */}
         <div className="proj-col">
 
           {/* Task */}
