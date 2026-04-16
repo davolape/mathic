@@ -39,8 +39,10 @@ function MatlicChat({ darkMode }) {
   }, [messages]);
 
   async function handleSend() {
-    const userText = input.trim();
-    if (!userText) return;
+  console.log("API Key exists:", !!process.env.REACT_APP_GROQ_KEY);
+  console.log("Key starts with:", process.env.REACT_APP_GROQ_KEY?.substring(0, 6));
+  
+  const userText = input.trim();
 
     const userMsg = { id: Date.now(), role: "user", text: userText };
     setMessages((prev) => [...prev, userMsg]);
