@@ -1,4 +1,4 @@
-function Navbar({ currentPage, setCurrentPage, darkMode }) {
+function Navbar({ currentPage, setCurrentPage, darkMode, user, onLogout }) {
 
   // Список пунктов меню
   const menuItems = [
@@ -33,7 +33,19 @@ function Navbar({ currentPage, setCurrentPage, darkMode }) {
           </li>
         ))}
       </ul>
-
+        {/* Профиль пользователя внизу */}
+        <div className="navbar-user">
+          <div className="navbar-user-avatar">{user?.avatar || "∑"}</div>
+          <div className="navbar-user-info">
+            <div className="navbar-user-name">
+              {user?.name?.split(" ")[0] || "User"}
+            </div>
+            <div className="navbar-user-xp">{user?.xp || 0} XP</div>
+          </div>
+          <button className="navbar-logout" onClick={onLogout} title="Logout">
+            ↪
+          </button>
+        </div>
     </nav>
   );
 }
