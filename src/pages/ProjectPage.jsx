@@ -10,7 +10,7 @@ const STEPS = [
   { id: 5, label: "PCA",               done: false },
 ];
 
-function SolveTab({ darkMode }) {
+function ProjectPage({ darkMode }) {
   const [solveMode, setSolveMode] = useState(null);
   const [mathAnswer, setMathAnswer] = useState("");
   const [codeAnswer, setCodeAnswer] = useState(
