@@ -2891,3 +2891,80 @@ body {
   flex-shrink: 0;
 }
 .navbar-logout:hover { color: #f87171; border-color: #f87171; }
+
+/* ══════════════════════════════
+   EXPLAIN MY CODE
+══════════════════════════════ */
+
+.explanation-box {
+  background: #0d0d1a;
+  border: 1px solid #EAB308;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.light .explanation-box {
+  background: #FFFBE8;
+  border-color: #EAB308;
+}
+
+.explanation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #3d2f00;
+  background: #1a1500;
+}
+.light .explanation-header {
+  background: #FFF3C0;
+  border-bottom-color: #EAB308;
+}
+
+.explanation-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #EAB308;
+}
+
+.explanation-close {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid #3d2f00;
+  background: transparent;
+  color: #EAB308;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.explanation-close:hover {
+  background: #EAB308;
+  color: #000;
+}
+
+.explanation-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.explanation-line {
+  font-size: 13px;
+  color: #E2E8F0;
+  line-height: 1.7;
+  padding: 8px 12px;
+  background: #16162A;
+  border-radius: 6px;
+  border-left: 2px solid #EAB308;
+}
+.light .explanation-line {
+  background: #FFF8DC;
+  color: #1E1E35;
+  border-left-color: #EAB308;
+}
