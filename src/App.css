@@ -3524,3 +3524,23 @@ body {
   font-size: 13px;
   color: #64748B;
 }
+
+/* XP уведомление */
+.xp-notification {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  background: #7C3AED;
+  color: #fff;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  animation: slideUp 0.3s ease;
+  z-index: 999;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}

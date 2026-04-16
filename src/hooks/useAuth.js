@@ -4,55 +4,79 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, googleProvider, db } from "../firebase";
 
 export function useAuth() {
-  // Текущий пользователь
   const [user, setUser] = useState(null);
-
-  // Загружается ли информация
   const [loading, setLoading] = useState(true);
 
-  // Слушаем изменения авторизации
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Пользователь вошёл — загружаем его данные из Firestore
-        const userDoc = await getDoc(
-          doc(db, "users", firebaseUser.uid)
-        );
+        const userRef = doc(db, "users", firebaseUser.uid);
+        const userDoc = await getDoc(userRef);
 
         if (userDoc.exists()) {
-          // Пользователь уже есть в базе
-          setUser(userDoc.data());
+          const data = userDoc.data();
+
+          // Проверяем streak
+          const today = new Date().toDateString();
+          const lastLogin = data.lastLoginDate;
+          const yesterday = new Date(
+            Date.now() - 86400000
+          ).toDateString();
+
+          let newStreak = data.streak || 0;
+          let streakXP = 0;
+
+          if (lastLogin === today) {
+            // Уже заходил сегодня — ничего не меняем
+            newStreak = data.streak || 0;
+          } else if (lastLogin === yesterday) {
+            // Заходил вчера — продолжаем streak
+            newStreak = (data.streak || 0) + 1;
+            streakXP = 5;
+          } else {
+            // Пропустил день — сбрасываем streak
+            newStreak = 1;
+            streakXP = 5;
+          }
+
+          const updated = {
+            ...data,
+            streak: newStreak,
+            xp: (data.xp || 0) + streakXP,
+            lastLoginDate: today,
+          };
+
+          await setDoc(userRef, updated);
+          setUser(updated);
+
         } else {
-          // Новый пользователь — создаём профиль
+          // Новый пользователь
+          const today = new Date().toDateString();
           const newUser = {
             uid: firebaseUser.uid,
             name: firebaseUser.displayName,
             email: firebaseUser.email,
             avatar: "∑",
-            xp: 0,
+            xp: 5,
             level: 1,
             tasksCompleted: 0,
-            streak: 0,
+            streak: 1,
+            lastLoginDate: today,
             clan: null,
             createdAt: new Date().toISOString(),
           };
-
-          // Сохраняем в Firestore
-          await setDoc(doc(db, "users", firebaseUser.uid), newUser);
+          await setDoc(userRef, newUser);
           setUser(newUser);
         }
       } else {
-        // Пользователь вышел
         setUser(null);
       }
       setLoading(false);
     });
 
-    // Отписываемся при размонтировании
     return () => unsubscribe();
   }, []);
 
-  // Вход через Google
   async function signInWithGoogle() {
     try {
       await signInWithPopup(auth, googleProvider);
@@ -61,7 +85,6 @@ export function useAuth() {
     }
   }
 
-  // Выход
   async function logout() {
     try {
       await signOut(auth);
@@ -70,22 +93,28 @@ export function useAuth() {
     }
   }
 
-  // Обновление XP
-  async function addXP(amount) {
+  // Добавляем XP пользователю
+  async function addXP(amount, reason) {
     if (!user) return;
 
-    const newXP = user.xp + amount;
+    const newXP = (user.xp || 0) + amount;
+
+    // Уровень растёт каждые 500 XP
     const newLevel = Math.floor(newXP / 500) + 1;
 
     const updated = {
       ...user,
       xp: newXP,
       level: newLevel,
-      tasksCompleted: user.tasksCompleted + 1,
+      tasksCompleted: reason === "task"
+        ? (user.tasksCompleted || 0) + 1
+        : (user.tasksCompleted || 0),
     };
 
     await setDoc(doc(db, "users", user.uid), updated);
     setUser(updated);
+
+    return { newXP, newLevel, gained: amount };
   }
 
   return { user, loading, signInWithGoogle, logout, addXP };

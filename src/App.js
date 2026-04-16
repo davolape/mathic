@@ -74,7 +74,7 @@ function App() {
           {darkMode ? "☀️ Light" : "🌙 Dark"}
         </button>
 
-        {currentPage === "project"      && <ProjectPage      darkMode={darkMode} user={user} addXP={addXP} />}
+        {currentPage === "project"      && <ProjectPage darkMode={darkMode} user={user} addXP={addXP} />}
         {currentPage === "profile"      && <ProfilePage      darkMode={darkMode} user={user} />}
         {currentPage === "matlic"       && <MatlicPage       darkMode={darkMode} />}
         {currentPage === "knowledge"    && <KnowledgePage    darkMode={darkMode} />}

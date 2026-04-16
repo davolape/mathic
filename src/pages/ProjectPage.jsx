@@ -9,9 +9,10 @@ const STEPS = [
   { id: 5, label: "PCA",             done: false },
 ];
 
-function ProjectPage({ darkMode }) {
+function ProjectPage({ darkMode, user, addXP }) {
   const [solveMode, setSolveMode]       = useState("code");
   const [hintsLeft, setHintsLeft]       = useState(10);
+  const [xpNotif, setXpNotif]           = useState(null);
   const [showResult, setShowResult]     = useState(false);
   const [explanation, setExplanation]   = useState(null);
   const [isExplaining, setIsExplaining] = useState(false);
@@ -29,7 +30,13 @@ print(result)`
   );
   const [mathText, setMathText] = useState("");
 
-  // AI объясняет код
+  async function giveXP(amount, reason) {
+    if (!addXP) return;
+    await addXP(amount, reason);
+    setXpNotif(`+${amount} XP earned! 🎉`);
+    setTimeout(() => setXpNotif(null), 3000);
+  }
+
   async function handleExplainCode() {
     if (!codeAnswer.trim()) return;
     setIsExplaining(true);
@@ -67,6 +74,7 @@ Do not give away full solutions.`,
       if (!response.ok) throw new Error(`Status ${response.status}`);
       const data = await response.json();
       setExplanation(data.choices[0].message.content);
+      await giveXP(10, "explain");
     } catch (err) {
       setExplanation("Sorry, could not connect to AI. Please try again.");
     } finally {
@@ -74,7 +82,6 @@ Do not give away full solutions.`,
     }
   }
 
-  // AI объясняет математическое решение
   async function handleExplainMath() {
     if (!mathText.trim()) return;
     setIsExplaining(true);
@@ -112,6 +119,7 @@ Do not give away the full answer — guide them to understand.`,
       if (!response.ok) throw new Error(`Status ${response.status}`);
       const data = await response.json();
       setExplanation(data.choices[0].message.content);
+      await giveXP(10, "explain");
     } catch (err) {
       setExplanation("Sorry, could not connect to AI. Please try again.");
     } finally {
@@ -119,7 +127,6 @@ Do not give away the full answer — guide them to understand.`,
     }
   }
 
-  // Блок объяснения — используется в обоих режимах
   function ExplanationBlock() {
     if (!explanation) return null;
     return (
@@ -147,6 +154,11 @@ Do not give away the full answer — guide them to understand.`,
   return (
     <div className={`proj ${darkMode ? "dark" : "light"}`}>
 
+      {/* XP уведомление */}
+      {xpNotif && (
+        <div className="xp-notification">{xpNotif}</div>
+      )}
+
       {/* Шаги вверху */}
       <div className="proj-topbar">
         <div className="proj-steps">
@@ -169,7 +181,7 @@ Do not give away the full answer — guide them to understand.`,
         <span className="proj-progress">Step 3/5 · 60% Complete</span>
       </div>
 
-      {/* Переключатель Math / Code + Hint */}
+      {/* Переключатель */}
       <div className="proj-mode-row">
         <div className="mode-toggle">
           <button
@@ -192,13 +204,12 @@ Do not give away the full answer — guide them to understand.`,
         />
       </div>
 
-      {/* Сетка 2 колонки */}
+      {/* Сетка */}
       <div className="proj-grid">
 
-        {/* ── ЛЕВАЯ КОЛОНКА ── */}
+        {/* ЛЕВАЯ КОЛОНКА */}
         <div className="proj-col">
 
-          {/* Theory */}
           <div className="proj-section-label">
             <div className="section-icon icon-purple">📖</div>
             <span>Theory</span>
@@ -218,13 +229,12 @@ Do not give away the full answer — guide them to understand.`,
             </div>
           </div>
 
-          {/* Редактор */}
           <div className="proj-section-label" style={{ marginTop: 16 }}>
             <div className="section-icon icon-blue">⌨️</div>
             <span>{solveMode === "code" ? "Code" : "Math Solution"}</span>
           </div>
 
-          {/* ── Code режим ── */}
+          {/* Code режим */}
           {solveMode === "code" && (
             <div className="proj-card" style={{ padding: 0 }}>
               <textarea
@@ -236,7 +246,10 @@ Do not give away the full answer — guide them to understand.`,
               <div className="code-actions">
                 <button
                   className="action-btn btn-run"
-                  onClick={() => setShowResult(true)}
+                  onClick={async () => {
+                    setShowResult(true);
+                    await giveXP(50, "task");
+                  }}
                 >
                   ▶ Run
                 </button>
@@ -264,7 +277,7 @@ Do not give away the full answer — guide them to understand.`,
             </div>
           )}
 
-          {/* ── Math режим ── */}
+          {/* Math режим */}
           {solveMode === "math" && (
             <div className="proj-card">
               <textarea
@@ -280,7 +293,10 @@ Do not give away the full answer — guide them to understand.`,
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
                 <button
                   className="action-btn btn-run"
-                  onClick={() => setShowResult(true)}
+                  onClick={async () => {
+                    setShowResult(true);
+                    await giveXP(50, "task");
+                  }}
                 >
                   ✓ Submit Solution
                 </button>
@@ -301,10 +317,9 @@ Do not give away the full answer — guide them to understand.`,
         {/* Разделитель */}
         <div className="proj-divider" />
 
-        {/* ── ПРАВАЯ КОЛОНКА ── */}
+        {/* ПРАВАЯ КОЛОНКА */}
         <div className="proj-col">
 
-          {/* Task */}
           <div className="proj-section-label">
             <div className="section-icon icon-yellow">🎯</div>
             <span>Task</span>
@@ -331,7 +346,6 @@ Do not give away the full answer — guide them to understand.`,
             </div>
           </div>
 
-          {/* Result */}
           <div className="proj-section-label" style={{ marginTop: 16 }}>
             <div className="section-icon icon-green">📊</div>
             <span>Result</span>
