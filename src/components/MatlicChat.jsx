@@ -90,8 +90,7 @@ function MatlicChat({ darkMode }) {
 
       // Парсим ответ
       const data = await response.json();
-      
-
+            
       // Временно — смотрим что вернул Groq
       console.log("Groq response:", data);
       console.log("Groq error detail:", JSON.stringify(data.error));
